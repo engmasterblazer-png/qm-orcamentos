@@ -8,6 +8,7 @@ import {
   getUnitBreakerId,
   getBudget,
   getBudgetItemsWithMaterials,
+  getTotalBudgetUnits,
   Budget,
   BudgetItemWithMaterial,
 } from '../lib/supabase'
@@ -15,7 +16,7 @@ import {
 export default function NovoOrcamentoPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [report, setReport] = useState<{ budget: Budget; items: BudgetItemWithMaterial[] } | null>(null)
+  const [report, setReport] = useState<{ budget: Budget; items: BudgetItemWithMaterial[]; totalUnits: number } | null>(null)
   const [bdiFactor, setBdiFactor] = useState(0)
   const [showItems, setShowItems] = useState(false)
 
@@ -53,8 +54,9 @@ export default function NovoOrcamentoPage() {
       // 5. Busca os valores calculados e os itens
       const refreshedBudget = await getBudget(budget.id)
       const items = await getBudgetItemsWithMaterials(budget.id)
+      const totalUnits = await getTotalBudgetUnits(budget.id)
 
-      setReport({ budget: refreshedBudget, items })
+      setReport({ budget: refreshedBudget, items, totalUnits })
       setBdiFactor(state.bdiPercent)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao criar orçamento'
@@ -86,6 +88,14 @@ export default function NovoOrcamentoPage() {
             </div>
 
             <div className="qm-report-grid">
+              <div className="qm-report-item">
+                <span className="qm-report-label">Disjuntor Geral</span>
+                <span className="qm-report-value">{report.budget.main_breaker?.amperage}A</span>
+              </div>
+              <div className="qm-report-item">
+                <span className="qm-report-label">Quantitativo (Unidades)</span>
+                <span className="qm-report-value">{report.totalUnits}</span>
+              </div>
               <div className="qm-report-item">
                 <span className="qm-report-label">Materiais</span>
                 <span className="qm-report-value">R$ {subtotalMaterials.toFixed(2)}</span>

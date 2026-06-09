@@ -46,6 +46,7 @@ export interface Budget {
   client_email?: string
   box_type: 'policarbonato' | 'aluminio'
   main_breaker_id: number
+  main_breaker?: MainBreaker
   dps_class?: 'classe_i_ii' | 'classe_ii'
   subtotal_materials?: number
   subtotal_labor?: number
@@ -209,17 +210,30 @@ export async function createBudget(budget: Omit<Budget, 'id' | 'created_at' | 'u
 }
 
 /**
- * Obtém um orçamento pelo ID
+ * Obtém um orçamento pelo ID com dados do disjuntor geral
  */
 export async function getBudget(budgetId: string): Promise<Budget> {
   const { data, error } = await supabase
     .from('budgets')
-    .select('*')
+    .select(`
+      *,
+      main_breakers(*)
+    `)
     .eq('id', budgetId)
     .single()
 
   if (error) throw error
-  return data
+  
+  // Normaliza os dados do main_breaker
+  const budget = data as any
+  if (budget.main_breakers && !Array.isArray(budget.main_breakers)) {
+    budget.main_breaker = budget.main_breakers
+  } else if (Array.isArray(budget.main_breakers) && budget.main_breakers.length > 0) {
+    budget.main_breaker = budget.main_breakers[0]
+  }
+  delete budget.main_breakers
+  
+  return budget as Budget
 }
 
 /**
@@ -264,6 +278,14 @@ export async function getBudgetUnits(budgetId: string): Promise<BudgetUnit[]> {
 
   if (error) throw error
   return data || []
+}
+
+/**
+ * Obtém o total de unidades de um orçamento
+ */
+export async function getTotalBudgetUnits(budgetId: string): Promise<number> {
+  const units = await getBudgetUnits(budgetId)
+  return units.reduce((total, unit) => total + unit.quantity, 0)
 }
 
 /**
