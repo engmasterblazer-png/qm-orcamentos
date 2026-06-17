@@ -16,7 +16,8 @@ INSERT INTO material_categories (id, name) VALUES
   (7,  'Outros'),
   (8,  'Execução'),
   (9,  'DPS'),
-  (10, 'Itens Extras');
+  (10, 'Itens Extras')
+ON CONFLICT (id) DO NOTHING;
 
 -- =============================================
 -- DISJUNTORES GERAIS
@@ -37,7 +38,8 @@ INSERT INTO main_breakers (id, amperage, label) VALUES
   (13, 300, '300 A'),
   (14, 350, '350 A'),
   (15, 400, '400 A'),
-  (16, 450, '450 A');
+  (16, 450, '450 A')
+ON CONFLICT (id) DO NOTHING;
 
 -- =============================================
 -- DISJUNTORES DE UNIDADE
@@ -55,7 +57,8 @@ INSERT INTO unit_breakers (id, phase, amperage, label) VALUES
   (10, 'tri',  80,  '80 A'),
   (11, 'tri',  90,  '90 A'),
   (12, 'tri',  100, '100 A'),
-  (13, 'tri',  125, '125 A');
+  (13, 'tri',  125, '125 A')
+ON CONFLICT (id) DO NOTHING;
 
 -- =============================================
 -- MATERIAIS
@@ -88,6 +91,14 @@ INSERT INTO materials (id, category_id, name, unit, unit_price, applies_to) VALU
   (20, 1, 'Cx Medidor',           'un',   70.0000, 'policarbonato'),
   (21, 1, 'CX Disjuntor Geral',   'un',  143.5175, 'policarbonato'),
   (22, 1, 'Cx Especial',          'un',  750.0000, 'policarbonato'),
+  (134, 1, 'Barramento 9,52 × 3,17 mm → 73 A',   'un',    0.0000, 'policarbonato'),
+  (135, 1, 'Barramento 12,70 × 3,17 mm → 97 A',  'un',    0.0000, 'policarbonato'),
+  (136, 1, 'Barramento 12,70 × 4,76 mm → 140 A', 'un',    0.0000, 'policarbonato'),
+  (137, 1, 'Barramento 15,87 × 4,76 mm → 175 A', 'un',    0.0000, 'policarbonato'),
+  (138, 1, 'Barramento 22,22 × 4,76 mm → 246 A', 'un',    0.0000, 'policarbonato'),
+  (139, 1, 'Barramento 31,75 × 4,76 mm → 350 A', 'un',    0.0000, 'policarbonato'),
+  (140, 1, 'Barramento 31,75 × 6,35 mm → 450 A', 'un',    0.0000, 'policarbonato'),
+  (141, 1, 'Barramento 31,75 × 7,94 mm → 550 A', 'un',    0.0000, 'policarbonato'),
 
 -- Disjuntores Monofásicos
   (23, 2, 'DJ Mono 40A',  'un',   6.1300, 'ambos'),
@@ -246,7 +257,8 @@ INSERT INTO materials (id, category_id, name, unit, unit_price, applies_to) VALU
   (130, 10, 'Barramento 100A',          'un', 182.5000, 'ambos'),
   (131, 10, 'Parafuso inox 1/4 (extra)','un',   0.5250, 'ambos'),
   (132, 10, 'Porca inox 1/4 (extra)',   'un',   0.2340, 'ambos'),
-  (133, 10, 'Arruela inox 1/4 (extra)', 'un',   0.3200, 'ambos');
+  (133, 10, 'Arruela inox 1/4 (extra)', 'un',   0.3200, 'ambos')
+ON CONFLICT (id) DO NOTHING;
 
 
 -- =============================================
@@ -274,7 +286,7 @@ INSERT INTO composition_by_main_breaker (main_breaker_id, material_id, quantity)
 -- DJ Geral 80A
   (4, 25, 0),   -- DJ Mono 63A
   (4, 31, 0),   -- DJ Tri 70A
-  (4, 32, 0),   -- DJ CM 80A
+  (4, 32, 1),   -- DJ CM 80A
   (4, 51, 0),   -- Cabo 25mm VM
   (4, 52, 0),   -- Cabo 25mm VD
   (4, 53, 0),   -- Cabo 25mm PT
@@ -282,7 +294,7 @@ INSERT INTO composition_by_main_breaker (main_breaker_id, material_id, quantity)
 
 -- DJ Geral 90A
   (5, 25, 0),   -- DJ Mono 63A
-  (5, 33, 0),   -- DJ CM 90A
+  (5, 33, 1),   -- DJ CM 90A
   (5, 51, 0),   -- Cabo 25mm VM
   (5, 52, 0),   -- Cabo 25mm VD
   (5, 53, 0),   -- Cabo 25mm PT
@@ -290,7 +302,7 @@ INSERT INTO composition_by_main_breaker (main_breaker_id, material_id, quantity)
 
 -- DJ Geral 100A
   (6, 25, 0),   -- DJ Mono 63A
-  (6, 34, 0),   -- DJ CM 100A
+  (6, 34, 1),   -- DJ CM 100A
   (6, 51, 0),   -- Cabo 25mm VM
   (6, 52, 0),   -- Cabo 25mm VD
   (6, 53, 0),   -- Cabo 25mm PT
@@ -330,7 +342,7 @@ INSERT INTO composition_by_main_breaker (main_breaker_id, material_id, quantity)
   (7, 121, 1),  -- Barramento tipo Pente
 
 -- DJ Geral 150A
-  (8, 36, 0),   -- DJ CM 150A
+  (8, 36, 1),   -- DJ CM 150A
   (8, 46, 0),   -- Cabo 16mm VM
   (8, 60, 0),   -- Cabo 50mm VM
   (8, 61, 0),   -- Cabo 50mm VD
@@ -338,7 +350,7 @@ INSERT INTO composition_by_main_breaker (main_breaker_id, material_id, quantity)
   (8, 63, 0),   -- Cabo 50mm BR
 
 -- DJ Geral 175A
-  (9, 37, 0),   -- DJ CM 175A
+  (9, 37, 1),   -- DJ CM 175A
   (9, 46, 0),   -- Cabo 16mm VM
   (9, 64, 0),   -- Cabo 70mm VM
   (9, 65, 0),   -- Cabo 70mm VD
@@ -346,7 +358,7 @@ INSERT INTO composition_by_main_breaker (main_breaker_id, material_id, quantity)
   (9, 67, 0),   -- Cabo 70mm BR
 
 -- DJ Geral 200A
-  (10, 38, 0),  -- DJ CM 200A
+  (10, 38, 1),  -- DJ CM 200A
   (10, 46, 0),  -- Cabo 16mm VM
   (10, 64, 0),  -- Cabo 70mm VM
   (10, 65, 0),  -- Cabo 70mm VD
@@ -354,7 +366,7 @@ INSERT INTO composition_by_main_breaker (main_breaker_id, material_id, quantity)
   (10, 67, 0),  -- Cabo 70mm BR
 
 -- DJ Geral 225A
-  (11, 39, 0),  -- DJ CM 225A
+  (11, 39, 1),  -- DJ CM 225A
   (11, 46, 0),  -- Cabo 16mm VM
   (11, 68, 0),  -- Cabo 95mm VM
   (11, 69, 0),  -- Cabo 95mm VD
@@ -362,12 +374,13 @@ INSERT INTO composition_by_main_breaker (main_breaker_id, material_id, quantity)
   (11, 71, 0),  -- Cabo 95mm BR
 
 -- DJ Geral 250A
-  (12, 40, 0),  -- DJ CM 250A
+  (12, 40, 1),  -- DJ CM 250A
   (12, 46, 0),  -- Cabo 16mm VM
   (12, 68, 0),  -- Cabo 95mm VM
   (12, 69, 0),  -- Cabo 95mm VD
   (12, 70, 0),  -- Cabo 95mm PT
-  (12, 71, 0);  -- Cabo 95mm BR
+  (12, 71, 0)
+ON CONFLICT (main_breaker_id, material_id) DO NOTHING;
 
 
 -- =============================================
@@ -531,7 +544,8 @@ INSERT INTO composition_by_unit_breaker (unit_breaker_id, material_id, quantity_
   (9, 118, 12),   -- Parafuso
   (9, 119, 4),    -- Rebite
   (9, 122, 1),    -- MO Poli
-  (9, 123, 1);    -- MO Alumínio
+  (9, 123, 1)
+ON CONFLICT (unit_breaker_id, material_id) DO NOTHING;
 
 
 -- =============================================
@@ -548,7 +562,8 @@ INSERT INTO composition_by_dps (dps_class, material_id, quantity) VALUES
   ('classe_ii', 124, 0.5),    -- Cabo DPS 6mm verde
   ('classe_ii', 126, 3),      -- Disjuntor DPS 25A 10kA
   ('classe_ii', 129, 3),      -- DPS Classe II
-  ('classe_ii', 121, 1);      -- Barramento tipo Pente
+  ('classe_ii', 121, 1)
+ON CONFLICT (dps_class, material_id) DO NOTHING;
 
 
 -- =============================================

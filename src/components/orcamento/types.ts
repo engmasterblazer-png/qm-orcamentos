@@ -41,8 +41,12 @@ export const PHASE_POLES: Record<Phase, string> = {
 }
 
 export function getBarramentoInfo(amperage: number): string {
-  if (amperage <= 70) return 'CMR1 (até 70A)'
-  if (amperage <= 200) return 'CMR2 (até 200A)'
-  if (amperage <= 450) return 'CMQ (até 450A)'
-  return 'Caixa Especial — Configuração acima de 250A'
+  if (amperage <= 63) return '9,52 × 3,17 mm → 73 A'
+  if (amperage <= 70) return '12,70 × 3,17 mm → 97 A'
+  if (amperage <= 125) return '12,70 × 4,76 mm → 140 A'
+  if (amperage <= 150) return '15,87 × 4,76 mm → 175 A'
+  if (amperage <= 225) return '22,22 × 4,76 mm → 246 A'
+  if (amperage <= 300) return '31,75 × 4,76 mm → 350 A'
+  if (amperage <= 350) return '31,75 × 6,35 mm → 450 A'
+  return '31,75 × 7,94 mm → 550 A'
 }

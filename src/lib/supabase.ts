@@ -343,3 +343,161 @@ export async function deleteBudget(budgetId: string): Promise<void> {
 
   if (error) throw error
 }
+
+// =============================================
+// RELAÇÕES DE MATERIAIS (CATÁLOGO)
+// =============================================
+
+export interface RelatedMaterial {
+  id: string
+  name: string
+  unit: string
+  unit_price: number
+  quantity: number | null
+  relation_type: 'main_breaker' | 'unit_breaker' | 'dps'
+  relation_label: string
+}
+
+/**
+ * Obtém materiais relacionados a um material específico
+ * Busca em composition_by_main_breaker, composition_by_unit_breaker e composition_by_dps
+ */
+export async function getRelatedMaterials(materialId: string): Promise<RelatedMaterial[]> {
+  const results: RelatedMaterial[] = []
+
+  // Busca em composition_by_main_breaker (se o material é um disjuntor geral)
+  const { data: mainBreakerCompositions } = await supabase
+    .from('composition_by_main_breaker')
+    .select(`
+      material_id,
+      quantity,
+      main_breaker_id,
+      main_breakers(amperage, label)
+    `)
+    .eq('material_id', materialId)
+
+  if (mainBreakerCompositions && mainBreakerCompositions.length > 0) {
+    for (const comp of mainBreakerCompositions) {
+      const breaker = comp.main_breakers as any
+      const { data: materials } = await supabase
+        .from('materials')
+        .select('*')
+        .in('id', [
+          (await supabase
+            .from('composition_by_main_breaker')
+            .select('material_id')
+            .eq('main_breaker_id', comp.main_breaker_id))
+            .data?.map((m: any) => m.material_id) || []
+        ])
+
+      if (materials) {
+        for (const mat of materials) {
+          if (mat.id !== materialId) {
+            results.push({
+              id: mat.id,
+              name: mat.name,
+              unit: mat.unit,
+              unit_price: mat.unit_price,
+              quantity: null,
+              relation_type: 'main_breaker',
+              relation_label: `DJ ${breaker?.amperage}A (${breaker?.label})`
+            })
+          }
+        }
+      }
+    }
+  }
+
+  // Busca em composition_by_unit_breaker
+  const { data: unitBreakerCompositions } = await supabase
+    .from('composition_by_unit_breaker')
+    .select(`
+      material_id,
+      quantity_per_unit,
+      unit_breaker_id,
+      unit_breakers(phase, amperage, label)
+    `)
+    .eq('material_id', materialId)
+
+  if (unitBreakerCompositions && unitBreakerCompositions.length > 0) {
+    for (const comp of unitBreakerCompositions) {
+      const breaker = comp.unit_breakers as any
+      const { data: materials } = await supabase
+        .from('materials')
+        .select('*')
+        .in('id', [
+          (await supabase
+            .from('composition_by_unit_breaker')
+            .select('material_id')
+            .eq('unit_breaker_id', comp.unit_breaker_id))
+            .data?.map((m: any) => m.material_id) || []
+        ])
+
+      if (materials) {
+        for (const mat of materials) {
+          if (mat.id !== materialId) {
+            results.push({
+              id: mat.id,
+              name: mat.name,
+              unit: mat.unit,
+              unit_price: mat.unit_price,
+              quantity: comp.quantity_per_unit,
+              relation_type: 'unit_breaker',
+              relation_label: `DJ ${breaker?.amperage}A ${breaker?.phase?.toUpperCase()} (${breaker?.label})`
+            })
+          }
+        }
+      }
+    }
+  }
+
+  // Busca em composition_by_dps
+  const { data: dpsCompositions } = await supabase
+    .from('composition_by_dps')
+    .select(`
+      material_id,
+      quantity,
+      dps_class
+    `)
+    .eq('material_id', materialId)
+
+  if (dpsCompositions && dpsCompositions.length > 0) {
+    for (const comp of dpsCompositions) {
+      const { data: materials } = await supabase
+        .from('materials')
+        .select('*')
+        .in('id', [
+          (await supabase
+            .from('composition_by_dps')
+            .select('material_id')
+            .eq('dps_class', comp.dps_class))
+            .data?.map((m: any) => m.material_id) || []
+        ])
+
+      if (materials) {
+        for (const mat of materials) {
+          if (mat.id !== materialId) {
+            results.push({
+              id: mat.id,
+              name: mat.name,
+              unit: mat.unit,
+              unit_price: mat.unit_price,
+              quantity: comp.quantity,
+              relation_type: 'dps',
+              relation_label: `DPS ${comp.dps_class === 'classe_i_ii' ? 'Classe I/II' : 'Classe II'}`
+            })
+          }
+        }
+      }
+    }
+  }
+
+  // Remove duplicatas
+  const seen = new Set<string>()
+  return results.filter(item => {
+    const key = `${item.id}-${item.relation_label}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}

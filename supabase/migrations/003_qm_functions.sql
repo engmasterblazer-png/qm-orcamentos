@@ -28,6 +28,7 @@ DECLARE
   v_markup_no_nf    NUMERIC(5,4) := 1.3;
   v_markup_with_nf  NUMERIC(5,4) := 1.55;
   v_caixa_id        INT;
+  v_main_breaker_amp INT;
 BEGIN
   -- Carrega orçamento
   SELECT * INTO v_budget FROM budgets WHERE id = p_budget_id;
@@ -95,31 +96,93 @@ BEGIN
       FROM materials m WHERE m.name = 'Cx Medidor';
 
     -- Cx Barramento conforme amperagem
-    IF (SELECT amperage FROM main_breakers WHERE id = v_budget.main_breaker_id) <= 125 THEN
+    SELECT amperage INTO v_main_breaker_amp FROM main_breakers WHERE id = v_budget.main_breaker_id;
+
+    IF v_main_breaker_amp <= 63 THEN
       INSERT INTO budget_items (budget_id, material_id, quantity, unit_price, total_price, origin)
       SELECT p_budget_id, m.id, 1, m.unit_price, m.unit_price, 'caixa'
-        FROM materials m WHERE m.name = 'Cx Barramento CB 100';
+        FROM materials m WHERE m.name IN (
+            'Barramento 9,52 × 3,17 mm → 73 A',
+            'Barramento 73A'
+        );
+    ELSIF v_main_breaker_amp <= 70 THEN
+      INSERT INTO budget_items (budget_id, material_id, quantity, unit_price, total_price, origin)
+      SELECT p_budget_id, m.id, 1, m.unit_price, m.unit_price, 'caixa'
+        FROM materials m WHERE m.name IN (
+            'Barramento 12,70 × 3,17 mm → 97 A',
+            'Barramento 97A'
+        );
+    ELSIF v_main_breaker_amp <= 125 THEN
+      INSERT INTO budget_items (budget_id, material_id, quantity, unit_price, total_price, origin)
+      SELECT p_budget_id, m.id, 1, m.unit_price, m.unit_price, 'caixa'
+        FROM materials m WHERE m.name IN (
+            'Barramento 12,70 × 4,76 mm → 140 A',
+            'Barramento 140A'
+        );
+    ELSIF v_main_breaker_amp <= 150 THEN
+      INSERT INTO budget_items (budget_id, material_id, quantity, unit_price, total_price, origin)
+      SELECT p_budget_id, m.id, 1, m.unit_price, m.unit_price, 'caixa'
+        FROM materials m WHERE m.name IN (
+            'Barramento 15,87 × 4,76 mm → 175 A',
+            'Barramento 175A'
+        );
+    ELSIF v_main_breaker_amp <= 225 THEN
+      INSERT INTO budget_items (budget_id, material_id, quantity, unit_price, total_price, origin)
+      SELECT p_budget_id, m.id, 1, m.unit_price, m.unit_price, 'caixa'
+        FROM materials m WHERE m.name IN (
+            'Barramento 22,22 × 4,76 mm → 246 A',
+            'Barramento 246A'
+        );
+    ELSIF v_main_breaker_amp <= 250 THEN
+      INSERT INTO budget_items (budget_id, material_id, quantity, unit_price, total_price, origin)
+      SELECT p_budget_id, m.id, 1, m.unit_price, m.unit_price, 'caixa'
+        FROM materials m WHERE m.name IN (
+            'Barramento 31,75 × 4,76 mm → 350 A',
+            'Barramento 350A'
+        );
+    ELSIF v_main_breaker_amp <= 350 THEN
+      INSERT INTO budget_items (budget_id, material_id, quantity, unit_price, total_price, origin)
+      SELECT p_budget_id, m.id, 1, m.unit_price, m.unit_price, 'caixa'
+        FROM materials m WHERE m.name IN (
+            'Barramento 31,75 × 6,35 mm → 450 A',
+            'Barramento 450A'
+        );
     ELSE
       INSERT INTO budget_items (budget_id, material_id, quantity, unit_price, total_price, origin)
       SELECT p_budget_id, m.id, 1, m.unit_price, m.unit_price, 'caixa'
-        FROM materials m WHERE m.name = 'Cx Barramento CB 200';
+        FROM materials m WHERE m.name IN (
+            'Barramento 31,75 × 7,94 mm → 550 A',
+            'Barramento 550A'
+        );
     END IF;
 
-    -- Cx DJ Geral (para CM acima de 125A)
-    IF (SELECT amperage FROM main_breakers WHERE id = v_budget.main_breaker_id) > 125 THEN
-      INSERT INTO budget_items (budget_id, material_id, quantity, unit_price, total_price, origin)
-      SELECT p_budget_id, m.id, 1, m.unit_price, m.unit_price, 'caixa'
-        FROM materials m WHERE m.name = 'CX Disjuntor Geral';
+    -- Cx DJ Geral (escolhido pelo usuário)
+    INSERT INTO budget_items (budget_id, material_id, quantity, unit_price, total_price, origin)
+    SELECT p_budget_id, m.id, 1, m.unit_price, m.unit_price, 'caixa'
+      FROM materials m WHERE m.name = 'CX Disjuntor Geral';
 
-      -- Cx Especial se mais de 15 medidores
-      IF v_total_units > 15 THEN
-        INSERT INTO budget_items (budget_id, material_id, quantity, unit_price, total_price, origin)
-        SELECT p_budget_id, m.id, CEIL(v_total_units::NUMERIC / 15)::INT,
-               m.unit_price, ROUND(CEIL(v_total_units::NUMERIC / 15) * m.unit_price, 2), 'caixa'
-          FROM materials m WHERE m.name = 'Cx Especial';
-      END IF;
+    -- Cx Especial se mais de 15 medidores
+    IF v_total_units > 15 THEN
+      INSERT INTO budget_items (budget_id, material_id, quantity, unit_price, total_price, origin)
+      SELECT p_budget_id, m.id, CEIL(v_total_units::NUMERIC / 15)::INT,
+             m.unit_price, ROUND(CEIL(v_total_units::NUMERIC / 15) * m.unit_price, 2), 'caixa'
+        FROM materials m WHERE m.name = 'Cx Especial';
     END IF;
   END IF;
+
+  -- Inclui o disjuntor geral escolhido como material, quando disponível
+  INSERT INTO budget_items (budget_id, material_id, quantity, unit_price, total_price, origin)
+  SELECT p_budget_id, m.id, 1, m.unit_price, m.unit_price, 'main_breaker'
+    FROM main_breakers mb
+    JOIN materials m ON m.category_id = 2
+      AND m.name = format('DJ CM %sA', mb.amperage)
+   WHERE mb.id = v_budget.main_breaker_id
+     AND NOT EXISTS (
+       SELECT 1 FROM composition_by_main_breaker c
+        WHERE c.main_breaker_id = mb.id
+          AND c.material_id = m.id
+          AND c.quantity > 0
+     );
 
   -- -------------------------------------------------------
   -- 2. MATERIAIS DO DJ GERAL
@@ -319,37 +382,51 @@ ALTER TABLE budget_units   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE budget_items   ENABLE ROW LEVEL SECURITY;
 
 -- Permite criar orçamentos para usuários autenticados e anon
+DROP POLICY IF EXISTS "insert_budgets" ON budgets;
 CREATE POLICY "insert_budgets" ON budgets
   FOR INSERT WITH CHECK (true);
 
 -- Permite ler e editar orçamentos (para anon, permite tudo; para autenticados, apenas os seus)
+DROP POLICY IF EXISTS "select_budgets" ON budgets;
 CREATE POLICY "select_budgets" ON budgets
   FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "update_budgets" ON budgets;
 CREATE POLICY "update_budgets" ON budgets
   FOR UPDATE USING (true);
 
 -- Permite operações em budget_units
+DROP POLICY IF EXISTS "insert_budget_units" ON budget_units;
 CREATE POLICY "insert_budget_units" ON budget_units
   FOR INSERT WITH CHECK (true);
 
+DROP POLICY IF EXISTS "select_budget_units" ON budget_units;
 CREATE POLICY "select_budget_units" ON budget_units
   FOR SELECT USING (true);
 
 -- Permite operações em budget_items
+DROP POLICY IF EXISTS "insert_budget_items" ON budget_items;
 CREATE POLICY "insert_budget_items" ON budget_items
   FOR INSERT WITH CHECK (true);
 
+DROP POLICY IF EXISTS "select_budget_items" ON budget_items;
 CREATE POLICY "select_budget_items" ON budget_items
   FOR SELECT USING (true);
 
 -- Tabelas de referência: somente leitura para anon e autenticados
+DROP POLICY IF EXISTS "read_materials" ON materials;
 CREATE POLICY "read_materials"         ON materials         FOR SELECT USING (auth.role() IN ('authenticated','anon'));
+DROP POLICY IF EXISTS "read_categories" ON material_categories;
 CREATE POLICY "read_categories"        ON material_categories FOR SELECT USING (auth.role() IN ('authenticated','anon'));
+DROP POLICY IF EXISTS "read_main_breakers" ON main_breakers;
 CREATE POLICY "read_main_breakers"     ON main_breakers     FOR SELECT USING (auth.role() IN ('authenticated','anon'));
+DROP POLICY IF EXISTS "read_unit_breakers" ON unit_breakers;
 CREATE POLICY "read_unit_breakers"     ON unit_breakers     FOR SELECT USING (auth.role() IN ('authenticated','anon'));
+DROP POLICY IF EXISTS "read_comp_main" ON composition_by_main_breaker;
 CREATE POLICY "read_comp_main"         ON composition_by_main_breaker FOR SELECT USING (auth.role() IN ('authenticated','anon'));
+DROP POLICY IF EXISTS "read_comp_unit" ON composition_by_unit_breaker;
 CREATE POLICY "read_comp_unit"         ON composition_by_unit_breaker FOR SELECT USING (auth.role() IN ('authenticated','anon'));
+DROP POLICY IF EXISTS "read_comp_dps" ON composition_by_dps;
 CREATE POLICY "read_comp_dps"          ON composition_by_dps FOR SELECT USING (auth.role() IN ('authenticated','anon'));
 
 ALTER TABLE materials                  ENABLE ROW LEVEL SECURITY;
