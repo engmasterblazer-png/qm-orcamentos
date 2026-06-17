@@ -403,7 +403,6 @@ export default function CatalogoPage() {
             <h3 style={{
               fontSize: '13px',
               fontWeight: '700',
-              color: '#1a2a4a',
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
               marginBottom: '16px',
